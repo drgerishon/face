@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import axios from 'axios';
 import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
 // import { Image } from 'next/image';
@@ -7,6 +8,7 @@ import Layout from '../../components/Layout';
 import Product from '../../models/Product';
 import db from '../../utils/db';
 import { Store } from '../../utils/Store';
+import { toast } from 'react-toastify';
 
 export default function ProductScreen (props) {
   const { product } = props;
@@ -16,13 +18,14 @@ export default function ProductScreen (props) {
     return <Layout title="Product not Found">Product not Found</Layout>;
   }
 
-  const addToCartHandler = () => {
+  const addToCartHandler = async () => {
     const existItem = state.cart.cartItems.find((x) => x.slug === product.slug);
     const quantity = existItem ? existItem.quantity + 1 : 1;
+    const { data } = await axios.get(`/api/products/${product._id}`)
+    
+    if (data.countInStock < quantity) {
+      return toast.error('Sorry. Product is out of stock');
 
-    if (product.countInStock < quantity) {
-      alert('sorry. Product is out of stock');
-      return;
     }
     dispatch({ type: 'CART_ADD_ITEM', payload: { ...product, quantity } });
     router.push('/cart');
